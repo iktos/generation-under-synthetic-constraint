@@ -6,4 +6,4 @@ Proprietary and confidential
 
 from pkg_resources import resource_filename
 
-fpscores_filename = resource_filename(__name__, 'fpscores.pkl.gz')
+fpscores_filename = resource_filename(__name__, "fpscores.pkl.gz")

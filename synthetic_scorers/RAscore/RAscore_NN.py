@@ -14,6 +14,7 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import AllChem
 from rdkit.DataStructs import cDataStructs
 
+
 class RAScorerNN:
     """
     Prediction of machine learned retrosynthetic accessibility score
@@ -36,7 +37,7 @@ class RAScorerNN:
             model_path_0 = "models/DNN_chembl_fcfp_counts/model.h5"
             model_path = os.path.join(os.path.dirname(__file__), model_path_0)
         self.nn_model = keras.models.load_model(model_path)
-        
+
     def ecfp_counts(self, smiles):
         """
         Converts SMILES into a counted ECFP6 vector with features.
@@ -47,14 +48,14 @@ class RAScorerNN:
         :rtype: np.array
         """
         mol = Chem.MolFromSmiles(smiles)
-        fp = AllChem.GetMorganFingerprint(mol, 3, useCounts=True, useFeatures=True) 
+        fp = AllChem.GetMorganFingerprint(mol, 3, useCounts=True, useFeatures=True)
         size = 2048
         arr = np.zeros((size,), np.int32)
         for idx, v in fp.GetNonzeroElements().items():
             nidx = idx % size
             arr[nidx] += int(v)
         return arr
-    
+
     def predict(self, smiles):
         """
         Predicts score from SMILES.
@@ -68,12 +69,11 @@ class RAScorerNN:
             arr = self.ecfp_counts(smiles)
         except ValueError:
             print("SMILES could not be converted to ECFP6 count vector")
-            return float('NaN')
-        
+            return float("NaN")
+
         try:
             proba = self.nn_model.predict(arr.reshape(1, -1))
             return proba[0][0]
         except:
             print("Prediction not possible")
-            return float('NaN')
-
+            return float("NaN")

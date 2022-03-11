@@ -21,6 +21,7 @@ from .rnn_utils import load_rnn_model
 from datetime import date
 from exploit_results.add_scores_to_db import add_score_to_db_pi3kmtor
 
+
 class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
     def __init__(
         self,
@@ -38,7 +39,7 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         n_jobs=-1,
         seed=None,
         synth_score=None,
-        suffix_coll=None
+        suffix_coll=None,
     ) -> None:
         self.pretrained_model_path = pretrained_model_path
         self.n_epochs = n_epochs
@@ -53,10 +54,10 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         self.random_start = random_start
         self.smi_file = smi_file
         self.pool = joblib.Parallel(n_jobs=n_jobs)
-        self.client = MongoClient(os.getenv('MONGO_URL'))[os.getenv("DB_STORAGE")]
+        self.client = MongoClient(os.getenv("MONGO_URL"))[os.getenv("DB_STORAGE")]
         self.seed = seed
-        self.synth_score=synth_score
-        self.suffix_coll=suffix_coll
+        self.synth_score = synth_score
+        self.suffix_coll = suffix_coll
 
     def load_smiles_from_file(self, smi_file):
         with open(smi_file) as f:
@@ -85,7 +86,7 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
                 starting_population = []
             else:
                 all_smiles = self.load_smiles_from_file(self.smi_file)
-                print(len(all_smiles) , " smiles loaded")
+                print(len(all_smiles), " smiles loaded")
 
                 starting_population = self.top_k(
                     all_smiles, scoring_function_start, self.mols_to_sample
@@ -107,9 +108,9 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         )
         database_name = benchmark_name
         if len(self.suffix_coll) > 0:
-            database_name=database_name+self.suffix_coll
+            database_name = database_name + self.suffix_coll
         if self.synth_score:
-            database_name = database_name #+"_"+self.synth_score
+            database_name = database_name  # +"_"+self.synth_score
         i = 0
         while database_name + "_" + str(i) in self.client.list_collection_names():
             i += 1
@@ -117,7 +118,6 @@ class SmilesRnnDirectedGenerator(GoalDirectedGenerator):
         database_name = database_name + "_" + str(i)
 
         print("Database in which molecules are stored : ", database_name)
-
 
         molecules = generator.optimise(
             objective=scoring_function,

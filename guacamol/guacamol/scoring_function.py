@@ -90,11 +90,11 @@ class MoleculewiseScoringFunction(ScoringFunction):
         except Exception:
             score = self.raw_score(smiles)
             modif = self.modify_score(score)
-            logger.warning(f'Unknown exception thrown during scoring of {smiles}')
+            logger.warning(f"Unknown exception thrown during scoring of {smiles}")
             return self.corrupt_score
 
     def score_list(self, smiles_list: List[str]) -> List[float]:
-   #     print("score list molecule wise ", len(smiles_list))
+        #     print("score list molecule wise ", len(smiles_list))
         return [self.score(smiles) for smiles in smiles_list]
 
     @abstractmethod
@@ -125,16 +125,17 @@ class BatchScoringFunction(ScoringFunction):
         super().__init__(score_modifier=score_modifier)
 
     def score(self, smiles: str) -> float:
-     #   print("score one batch scoring")
+        #   print("score one batch scoring")
         return self.score_list([smiles])[0]
 
     def score_list(self, smiles_list: List[str]) -> List[float]:
-  #      print("score list batch ",len(smiles_list),ScoringFunction)
+        #      print("score list batch ",len(smiles_list),ScoringFunction)
         raw_scores = self.raw_score_list(smiles_list)
 
-        scores = [self.corrupt_score if raw_score is None
-                  else self.modify_score(raw_score)
-                  for raw_score in raw_scores]
+        scores = [
+            self.corrupt_score if raw_score is None else self.modify_score(raw_score)
+            for raw_score in raw_scores
+        ]
 
         return scores
 
@@ -161,7 +162,7 @@ class ScoringFunctionBasedOnRdkitMol(MoleculewiseScoringFunction):
     """
 
     def raw_score(self, smiles: str) -> float:
-      #  print("raw score based rdkit")
+        #  print("raw score based rdkit")
         mol = smiles_to_rdkit_mol(smiles)
 
         if mol is None:
@@ -200,11 +201,11 @@ class ArithmeticMeanScoringFunction(BatchScoringFunction):
         assert number_scoring_functions == len(self.weights)
 
     def raw_score_list(self, smiles_list: List[str]) -> List[float]:
-     #   print("raw score list arithmetic",len(smiles_list))
+        #   print("raw score list arithmetic",len(smiles_list))
         scores = []
 
         for function, weight in zip(self.scoring_functions, self.weights):
-      #      print("one function score_list :", function)
+            #      print("one function score_list :", function)
             res = function.score_list(smiles_list)
             scores.append(weight * np.array(res))
 
@@ -228,12 +229,13 @@ class GeometricMeanScoringFunction(MoleculewiseScoringFunction):
         self.scoring_functions = scoring_functions
 
     def raw_score(self, smiles: str) -> float:
-      #  print("raw score geometric")
+        #  print("raw score geometric")
         partial_scores = [f.score(smiles) for f in self.scoring_functions]
         if self.corrupt_score in partial_scores:
             return self.corrupt_score
 
         return geometric_mean(partial_scores)
+
 
 class BatchGeometricMeanScoringFunction(BatchScoringFunction):
     """
@@ -249,11 +251,12 @@ class BatchGeometricMeanScoringFunction(BatchScoringFunction):
 
         self.scoring_functions = scoring_functions
         self.number_scoring_functions = len(scoring_functions)
-        self.weights = np.ones(self.number_scoring_functions) if weights is None else weights
-
+        self.weights = (
+            np.ones(self.number_scoring_functions) if weights is None else weights
+        )
 
     def raw_score(self, smiles: str) -> float:
-      #  print("raw score geometric")
+        #  print("raw score geometric")
         partial_scores = [f.score(smiles) for f in self.scoring_functions]
         if self.corrupt_score in partial_scores:
             return self.corrupt_score
@@ -265,16 +268,21 @@ class BatchGeometricMeanScoringFunction(BatchScoringFunction):
         for function, weight in zip(self.scoring_functions, self.weights):
             #      print("one function score_list :", function)
             res = function.score_list(smiles_list)
-            if len(res)!=len(smiles_list):
-                print("Strange size of score list :", len(res), " instead of : ", len(smiles_list))
-                diff = len(res)-len(smiles_list)
-                if diff>0:
-                    res = res[0:len(smiles_list)]
+            if len(res) != len(smiles_list):
+                print(
+                    "Strange size of score list :",
+                    len(res),
+                    " instead of : ",
+                    len(smiles_list),
+                )
+                diff = len(res) - len(smiles_list)
+                if diff > 0:
+                    res = res[0 : len(smiles_list)]
                 else:
-                    res.extend([0]*diff)
+                    res.extend([0] * diff)
             scores.append(weight * np.array(res))
 
-        scores = np.array(scores).prod(axis=0)**(1/self.number_scoring_functions)
+        scores = np.array(scores).prod(axis=0) ** (1 / self.number_scoring_functions)
 
         return list(scores)
 
@@ -290,12 +298,12 @@ class ScoringFunctionWrapper(ScoringFunction):
         self.evaluations = 0
 
     def score(self, smiles):
-       # print(" one score wrapper")
+        # print(" one score wrapper")
         self._increment_evaluation_count(1)
         return self.scoring_function.score(smiles)
 
     def score_list(self, smiles_list):
-       # print("score list wrapper",len(smiles_list))
+        # print("score list wrapper",len(smiles_list))
         self._increment_evaluation_count(len(smiles_list))
         return self.scoring_function.score_list(smiles_list)
 

@@ -15,24 +15,24 @@ from .smiles_rnn_directed_generator import SmilesRnnDirectedGenerator
 
 
 def goal_directed_generation(
-        suite,
-        synth_score,
-        n_epochs,
-        mols_to_sample: int = 1024,
-        keep_top: int = 512,
-        optimize_n_epochs: int = 2,
-        max_len: int = 100,
-        optimize_batch_size: int = 256,
-        number_final_samples: int = 0,
-        random_start: bool = False,
-        n_jobs: int = -1,
-        seed: int = 42,
-        output_file: str = None,
-        suffix_coll="",
-        smiles_file: str = None,
-        pretrained_model_path: str = None,
+    suite,
+    synth_score,
+    n_epochs,
+    mols_to_sample: int = 1024,
+    keep_top: int = 512,
+    optimize_n_epochs: int = 2,
+    max_len: int = 100,
+    optimize_batch_size: int = 256,
+    number_final_samples: int = 0,
+    random_start: bool = False,
+    n_jobs: int = -1,
+    seed: int = 42,
+    output_file: str = None,
+    suffix_coll="",
+    smiles_file: str = None,
+    pretrained_model_path: str = None,
 ):
-    if not os.getenv('MONGO_URL'):
+    if not os.getenv("MONGO_URL"):
         raise Exception("No MONGO_URL environment variable was set")
 
     if not os.getenv("DB_STORAGE"):
@@ -45,13 +45,19 @@ def goal_directed_generation(
             smiles_file = "pi3kmtor/pi3kmtor.smiles"
 
     if pretrained_model_path is None:
-        pretrained_model_path = "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_chembl.pt"
+        pretrained_model_path = (
+            "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_chembl.pt"
+        )
 
     if smiles_file is None:
         smiles_file = "guacamol_baselines/data/guacamol_v1_all.smiles"
 
     if output_file is None:
-        output_file =  "guacamol_baselines/smiles_lstm_hc/results/goal_directed_results_" + suite+ ".json"
+        output_file = (
+            "guacamol_baselines/smiles_lstm_hc/results/goal_directed_results_"
+            + suite
+            + ".json"
+        )
 
     optimizer = SmilesRnnDirectedGenerator(
         pretrained_model_path=pretrained_model_path,
@@ -71,10 +77,11 @@ def goal_directed_generation(
     )
 
     assess_goal_directed_generation(
-        optimizer, json_output_file=output_file, benchmark_version=suite,
-        synth_score=synth_score
+        optimizer,
+        json_output_file=output_file,
+        benchmark_version=suite,
+        synth_score=synth_score,
     )
-
 
 
 if __name__ == "__main__":
@@ -147,7 +154,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if not os.getenv('MONGO_URL'):
+    if not os.getenv("MONGO_URL"):
         raise Exception("No MONGO_URL environment variable was set")
 
     if not os.getenv("DB_STORAGE"):
@@ -160,7 +167,9 @@ if __name__ == "__main__":
         args.smiles_file = "pi3kmtor/pi3kmtor.smiles"
 
     else:
-        args.model_path = "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_chembl.pt"
+        args.model_path = (
+            "guacamol_baselines/smiles_lstm_hc/pretrained_model/model_final_chembl.pt"
+        )
 
     if args.output_file is None:
         json_file_path = (
@@ -170,20 +179,20 @@ if __name__ == "__main__":
         )
         args.output_file = json_file_path
 
-
-    goal_directed_generation(suite=args.suite,
-                             synth_score=args.synth_score,
-                             n_epochs=args.n_epochs,
-                             mols_to_sample=args.mols_to_sample,
-                             keep_top=args.keep_top,
-                             optimize_n_epochs = args.optimize_n_epochs,
-                             max_len=args.max_len,
-                             optimize_batch_size=args.optimize_batch_size,
-                             random_start=args.random_start,
-                             n_jobs= args.n_jobs,
-                             seed=args.seed,
-                             output_file=args.output_file,
-                             suffix_coll=args.suffix_coll,
-                             smiles_file=args.smiles_file,
-                             pretrained_model_path=args.model_path,
-                             )
+    goal_directed_generation(
+        suite=args.suite,
+        synth_score=args.synth_score,
+        n_epochs=args.n_epochs,
+        mols_to_sample=args.mols_to_sample,
+        keep_top=args.keep_top,
+        optimize_n_epochs=args.optimize_n_epochs,
+        max_len=args.max_len,
+        optimize_batch_size=args.optimize_batch_size,
+        random_start=args.random_start,
+        n_jobs=args.n_jobs,
+        seed=args.seed,
+        output_file=args.output_file,
+        suffix_coll=args.suffix_coll,
+        smiles_file=args.smiles_file,
+        pretrained_model_path=args.model_path,
+    )

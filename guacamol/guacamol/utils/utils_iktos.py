@@ -15,16 +15,22 @@ from rdkit.Chem import AllChem
 def compute_morgan_fp(mol, nb_bits, radius) -> np.array:
     fp = np.zeros(nb_bits, dtype=int)
     morgan_fp = AllChem.GetHashedMorganFingerprint(
-        mol, radius=radius, nBits=nb_bits, useChirality=False, useBondTypes=False, useFeatures=False
+        mol,
+        radius=radius,
+        nBits=nb_bits,
+        useChirality=False,
+        useBondTypes=False,
+        useFeatures=False,
     ).GetNonzeroElements()
-    fp_values = np.array((list(morgan_fp.values())))>0
+    fp_values = np.array((list(morgan_fp.values()))) > 0
     np.put(fp, list(morgan_fp.keys()), fp_values)
     return fp
 
-def add_descriptors(mol) :  # pragma: no cover
+
+def add_descriptors(mol):  # pragma: no cover
     """Computes 2D Descriptors for a given SMILES
     """
- #   mol = MolFromSmiles(smiles)
+    #   mol = MolFromSmiles(smiles)
     descriptors = [
         Descriptors.TPSA(mol),
         Descriptors.SlogP_VSA1(mol),

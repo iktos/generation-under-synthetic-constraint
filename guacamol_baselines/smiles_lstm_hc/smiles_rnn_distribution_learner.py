@@ -80,7 +80,7 @@ class SmilesRnnDistributionLearner:
         if self.finetuning:
             pretrained_file = "model_final_0.473.pt"
             pretrained_path = "guacamol_baselines/goal_directed_generation/smiles_lstm_hc/pretrained_model/"
-            model_weights =os.path.join(pretrained_path, pretrained_file)
+            model_weights = os.path.join(pretrained_path, pretrained_file)
 
             map_location = lambda storage, loc: storage
             print("Loading weight from the pretrained model")

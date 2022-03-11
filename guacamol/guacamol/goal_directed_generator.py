@@ -10,9 +10,13 @@ class GoalDirectedGenerator(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def generate_optimized_molecules(self, scoring_function: ScoringFunction, number_molecules: int,
-                                     starting_population: Optional[List[str]] = None,
-                                     benchmark_name=None) -> List[str]:
+    def generate_optimized_molecules(
+        self,
+        scoring_function: ScoringFunction,
+        number_molecules: int,
+        starting_population: Optional[List[str]] = None,
+        benchmark_name=None,
+    ) -> List[str]:
         """
         Given an objective function, generate molecules that score as high as possible.
 

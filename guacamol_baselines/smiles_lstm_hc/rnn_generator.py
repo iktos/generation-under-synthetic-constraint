@@ -127,7 +127,6 @@ class SmilesRnnMoleculeGenerator:
 
             self.client[database_name].insert_many(raws_to_save)
 
-
             payload = list(canonicalized_samples.difference(seen))
             payload.sort()  # necessary for reproducibility between different runs
 

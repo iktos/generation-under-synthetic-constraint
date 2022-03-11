@@ -2,11 +2,30 @@ from typing import Callable, List
 from rdkit import Chem
 from rdkit.DataStructs.cDataStructs import TanimotoSimilarity
 import os
-from guacamol.guacamol.utils.descriptors import mol_weight, logP, num_H_donors, tpsa, num_atoms, AtomCounter
+from guacamol.guacamol.utils.descriptors import (
+    mol_weight,
+    logP,
+    num_H_donors,
+    tpsa,
+    num_atoms,
+    AtomCounter,
+)
 from guacamol.guacamol.utils.fingerprints import get_fingerprint
-from guacamol.guacamol.score_modifier import ScoreModifier, MinGaussianModifier, MaxGaussianModifier, GaussianModifier
-from guacamol.guacamol.scoring_function import ScoringFunctionBasedOnRdkitMol, MoleculewiseScoringFunction, BatchScoringFunction
-from guacamol.guacamol.utils.chemistry import smiles_to_rdkit_mol, parse_molecular_formula
+from guacamol.guacamol.score_modifier import (
+    ScoreModifier,
+    MinGaussianModifier,
+    MaxGaussianModifier,
+    GaussianModifier,
+)
+from guacamol.guacamol.scoring_function import (
+    ScoringFunctionBasedOnRdkitMol,
+    MoleculewiseScoringFunction,
+    BatchScoringFunction,
+)
+from guacamol.guacamol.utils.chemistry import (
+    smiles_to_rdkit_mol,
+    parse_molecular_formula,
+)
 from guacamol.guacamol.utils.math import arithmetic_mean, geometric_mean
 import time
 import json
@@ -25,7 +44,11 @@ class RdkitScoringFunction(ScoringFunctionBasedOnRdkitMol):
     Scoring function wrapping RDKit descriptors.
     """
 
-    def __init__(self, descriptor: Callable[[Chem.Mol], float], score_modifier: ScoreModifier = None) -> None:
+    def __init__(
+        self,
+        descriptor: Callable[[Chem.Mol], float],
+        score_modifier: ScoreModifier = None,
+    ) -> None:
         """
         Args:
             descriptor: molecular descriptors, such as the ones in descriptors.py
@@ -56,7 +79,9 @@ class TanimotoScoringFunction(ScoringFunctionBasedOnRdkitMol):
         self.fp_type = fp_type
         target_mol = smiles_to_rdkit_mol(target)
         if target_mol is None:
-            raise RuntimeError(f'The similarity target {target} is not a valid molecule.')
+            raise RuntimeError(
+                f"The similarity target {target} is not a valid molecule."
+            )
 
         self.ref_fp = get_fingerprint(target_mol, self.fp_type)
 
@@ -70,7 +95,9 @@ class MaxTanimotoScoringFunction(ScoringFunctionBasedOnRdkitMol):
     Scoring function that looks at the fingerprint similarity against a target molecule.
     """
 
-    def __init__(self, smiles_ref, fp_type, score_modifier: ScoreModifier = None, ) -> None:
+    def __init__(
+        self, smiles_ref, fp_type, score_modifier: ScoreModifier = None
+    ) -> None:
         """
         Args:
             targets: targets molecules
@@ -83,19 +110,17 @@ class MaxTanimotoScoringFunction(ScoringFunctionBasedOnRdkitMol):
         self.smiles_ref = smiles_ref
         targets_mols = [smiles_to_rdkit_mol(target) for target in smiles_ref]
         if None in targets_mols:
-            raise RuntimeError(
-                f'A similarity target is not a valid molecule.')
+            raise RuntimeError(f"A similarity target is not a valid molecule.")
 
         self.ref_fp = [get_fingerprint(mol, self.fp_type) for mol in targets_mols]
 
     def score_mol(self, mol: Chem.Mol, return_smiles=False) -> float:
         fp = get_fingerprint(mol, self.fp_type)
-        all_tani = np.array([TanimotoSimilarity(fp, ref ) for ref in self.ref_fp])
-        if return_smiles :
+        all_tani = np.array([TanimotoSimilarity(fp, ref) for ref in self.ref_fp])
+        if return_smiles:
             return self.smiles_ref[np.argmax(all_tani)]
         else:
             return np.max(all_tani)
-        
 
 
 class CNS_MPO_ScoringFunction(ScoringFunctionBasedOnRdkitMol):
@@ -103,7 +128,9 @@ class CNS_MPO_ScoringFunction(ScoringFunctionBasedOnRdkitMol):
     CNS MPO scoring function
     """
 
-    def __init__(self, max_logP=5.0, maxMW=360, min_tpsa=40, max_tpsa=90, max_hbd=0) -> None:
+    def __init__(
+        self, max_logP=5.0, maxMW=360, min_tpsa=40, max_tpsa=90, max_hbd=0
+    ) -> None:
         super().__init__()
 
         self.logP_gauss = MinGaussianModifier(max_logP, 1)
@@ -139,7 +166,7 @@ class IsomerScoringFunction(MoleculewiseScoringFunction):
     - total number of atoms with a Gaussian modifier with mu=6, sigma=2
     """
 
-    def __init__(self, molecular_formula: str, mean_function='geometric') -> None:
+    def __init__(self, molecular_formula: str, mean_function="geometric") -> None:
         """
         Args:
             molecular_formula: target molecular formula
@@ -152,26 +179,38 @@ class IsomerScoringFunction(MoleculewiseScoringFunction):
 
     @staticmethod
     def determine_mean_function(mean_function: str) -> Callable[[List[float]], float]:
-        if mean_function == 'arithmetic':
+        if mean_function == "arithmetic":
             return arithmetic_mean
-        if mean_function == 'geometric':
+        if mean_function == "geometric":
             return geometric_mean
         raise ValueError(f'Invalid mean function: "{mean_function}"')
 
     @staticmethod
-    def determine_scoring_functions(molecular_formula: str) -> List[RdkitScoringFunction]:
+    def determine_scoring_functions(
+        molecular_formula: str
+    ) -> List[RdkitScoringFunction]:
         element_occurrences = parse_molecular_formula(molecular_formula)
 
-        total_number_atoms = sum(element_tuple[1] for element_tuple in element_occurrences)
+        total_number_atoms = sum(
+            element_tuple[1] for element_tuple in element_occurrences
+        )
 
         # scoring functions for each element
-        functions = [RdkitScoringFunction(descriptor=AtomCounter(element),
-                                          score_modifier=GaussianModifier(mu=n_atoms, sigma=1.0))
-                     for element, n_atoms in element_occurrences]
+        functions = [
+            RdkitScoringFunction(
+                descriptor=AtomCounter(element),
+                score_modifier=GaussianModifier(mu=n_atoms, sigma=1.0),
+            )
+            for element, n_atoms in element_occurrences
+        ]
 
         # scoring functions for the total number of atoms
-        functions.append(RdkitScoringFunction(descriptor=num_atoms,
-                                              score_modifier=GaussianModifier(mu=total_number_atoms, sigma=2.0)))
+        functions.append(
+            RdkitScoringFunction(
+                descriptor=num_atoms,
+                score_modifier=GaussianModifier(mu=total_number_atoms, sigma=2.0),
+            )
+        )
 
         return functions
 

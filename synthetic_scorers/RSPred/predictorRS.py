@@ -15,8 +15,8 @@ from torch import Tensor
 from torch import nn
 import os
 
-class RScorePredictorNet(nn.Module):  # predict continous score in [0, 1]
 
+class RScorePredictorNet(nn.Module):  # predict continous score in [0, 1]
     def __init__(self, input_size, hidden_size, dropout_p):
         super(RScorePredictorNet, self).__init__()
         self.first_layer = nn.Linear(input_size, hidden_size)
@@ -30,7 +30,6 @@ class RScorePredictorNet(nn.Module):  # predict continous score in [0, 1]
         self.batchnorm_2 = nn.BatchNorm1d(hidden_size)
         self.batchnorm_3 = nn.BatchNorm1d(hidden_size)
 
-        
     def forward(self, x):
         x = self.first_layer(x)
         x = self.batchnorm_1(x)
@@ -50,7 +49,7 @@ class RScorePredictorNet(nn.Module):  # predict continous score in [0, 1]
 
 
 def compute_morgan_fp(mol, radius, n_bits):
-    fp = np.zeros(n_bits, dtype=int)#
+    fp = np.zeros(n_bits, dtype=int)  #
 
     morgan_fp = AllChem.GetHashedMorganFingerprint(
         mol, radius=radius, nBits=n_bits, useChirality=True
@@ -61,21 +60,25 @@ def compute_morgan_fp(mol, radius, n_bits):
     return fp
 
 
-
-            
 class RSPredictor:
     def __init__(self, weights_filename=None):
-            if weights_filename is None:
-                weights_filename = "chembl_230K_final_87.0.pickle"
+        if weights_filename is None:
+            weights_filename = "chembl_230K_final_87.0.pickle"
 
-            weights_path = os.path.join(os.path.dirname(__file__), "models", weights_filename)
-            state_dict = pickle.load(open(weights_path, 'rb'))
-            params = state_dict["params"]
-            self.radius = params["radius"]
-            self.morgan_size = params["morgan_size"]
-            self.my_predictor = RScorePredictorNet(input_size=params["morgan_size"], hidden_size=params["hidden_size"], dropout_p=params["dropout_p"])
-            self.my_predictor.load_state_dict(state_dict['state_dict'])
-            self.my_predictor.eval()
+        weights_path = os.path.join(
+            os.path.dirname(__file__), "models", weights_filename
+        )
+        state_dict = pickle.load(open(weights_path, "rb"))
+        params = state_dict["params"]
+        self.radius = params["radius"]
+        self.morgan_size = params["morgan_size"]
+        self.my_predictor = RScorePredictorNet(
+            input_size=params["morgan_size"],
+            hidden_size=params["hidden_size"],
+            dropout_p=params["dropout_p"],
+        )
+        self.my_predictor.load_state_dict(state_dict["state_dict"])
+        self.my_predictor.eval()
 
     def compute_fingerprint(self, mol):
         fp = compute_morgan_fp(mol, radius=self.radius, n_bits=self.morgan_size)
@@ -83,7 +86,7 @@ class RSPredictor:
 
     def predict(self, smiles):
         fp = self.compute_fingerprint(Chem.MolFromSmiles(smiles))
-        fp = torch.log1p(Tensor(fp)).view(1,-1)
+        fp = torch.log1p(Tensor(fp)).view(1, -1)
         with torch.no_grad():
             proba_synth = self.my_predictor(fp).item()
             return proba_synth
@@ -94,7 +97,7 @@ class RSPredictor:
         mol_list = [m for m in mol_list if m is not None]
         fp_list = [self.compute_fingerprint(mol) for mol in mol_list]
         try:
-            fp_list = torch.log1p(Tensor(fp_list)).view(len(mol_list),-1)
+            fp_list = torch.log1p(Tensor(fp_list)).view(len(mol_list), -1)
         except:
             print("PBM BECAUSE LEN MOL LIST IS : ", len(mol_list))
         with torch.no_grad():
@@ -102,4 +105,3 @@ class RSPredictor:
             for id_ in id_nul:
                 proba_synth.insert(id_, 0)
             return proba_synth
-
